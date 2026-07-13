@@ -1,24 +1,31 @@
 import { motion, useInView } from 'framer-motion'
-import { useRef, useState, MouseEvent } from 'react'
+import { useRef, useState, useEffect, MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  Code2, Brain, BarChart2, Palette, ShieldCheck, Rocket,
-  Coffee, Server, Layout, ArrowUpRight
+  Code2, Brain, Palette, ShieldCheck, Rocket,
+  Coffee, Server, Layout, ArrowUpRight, Star, Loader2
 } from 'lucide-react'
-import { courses, Course } from '../data/courses'
+import { fetchPublishedSiteCourses } from '../lib/courseService'
+import type { Course } from '../store/contentStore'
 
-// Map course categories to icons and gradient colors
+// Map course subcategories to icons and gradient colors
 const categoryConfig: Record<string, { icon: typeof Code2; tone: string }> = {
   DSA: { icon: Code2, tone: 'from-violet-500 to-purple-500' },
-  Java: { icon: Coffee, tone: 'from-blue-500 to-cyan-500' },
-  Python: { icon: Brain, tone: 'from-emerald-500 to-teal-500' },
-  Django: { icon: Server, tone: 'from-green-600 to-emerald-500' },
-  DevOps: { icon: Rocket, tone: 'from-fuchsia-500 to-pink-500' },
-  'Exam Prep': { icon: ShieldCheck, tone: 'from-amber-500 to-orange-500' },
-  'System Design': { icon: Layout, tone: 'from-rose-500 to-pink-500' },
+  'Web Development': { icon: Code2, tone: 'from-blue-500 to-cyan-500' },
+  'App Development': { icon: Coffee, tone: 'from-blue-500 to-cyan-500' },
+  'Flutter Development': { icon: Coffee, tone: 'from-sky-500 to-blue-500' },
+  'AI & Machine Learning': { icon: Brain, tone: 'from-emerald-500 to-teal-500' },
+  'Data Science': { icon: Brain, tone: 'from-emerald-500 to-teal-500' },
+  'Cyber Security': { icon: ShieldCheck, tone: 'from-amber-500 to-orange-500' },
+  'Cloud Computing': { icon: Server, tone: 'from-green-600 to-emerald-500' },
+  'Aptitude Preparation': { icon: Rocket, tone: 'from-fuchsia-500 to-pink-500' },
+  'Interview Preparation': { icon: Layout, tone: 'from-rose-500 to-pink-500' },
+  'JEE Preparation': { icon: ShieldCheck, tone: 'from-amber-500 to-orange-500' },
+  'NEET Preparation': { icon: ShieldCheck, tone: 'from-amber-500 to-orange-500' },
+  'CUET Preparation': { icon: ShieldCheck, tone: 'from-amber-500 to-orange-500' },
 }
 
-const defaultConfig = { icon: Code2, tone: 'from-violet-500 to-blue-500' }
+const defaultConfig = { icon: Palette, tone: 'from-violet-500 to-blue-500' }
 
 interface GlassCourseCardProps {
   course: Course
@@ -28,7 +35,7 @@ interface GlassCourseCardProps {
 function GlassCourseCard({ course, index }: GlassCourseCardProps) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [tilt, setTilt] = useState({ rx: 0, ry: 0 })
-  const config = categoryConfig[course.category] ?? defaultConfig
+  const config = categoryConfig[course.subcategory] ?? defaultConfig
   const Icon = config.icon
 
   const onMove = (e: MouseEvent<HTMLDivElement>) => {
@@ -76,14 +83,21 @@ function GlassCourseCard({ course, index }: GlassCourseCardProps) {
           <Icon size={22} />
         </motion.div>
         <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-brand-muted dark:border-white/10 dark:bg-white/5 dark:text-brand-dark-muted">
-          {course.category}
+          {course.subcategory}
         </span>
       </div>
 
       <h3 className="mt-6 text-xl font-semibold tracking-tight text-brand-text dark:text-white">{course.title}</h3>
       <p className="mt-2 text-sm text-brand-muted dark:text-brand-dark-muted line-clamp-2">{course.description}</p>
 
-      <div className="mt-6 flex items-center justify-between border-t border-black/5 pt-4 dark:border-white/10">
+      {/* Live rating — reflects real ratings submitted by learners */}
+      <div className="mt-3 flex items-center gap-1.5">
+        <Star size={13} className="text-amber-400 fill-amber-400" />
+        <span className="text-xs font-bold text-brand-text dark:text-white">{course.rating || '—'}</span>
+        <span className="text-xs text-brand-muted dark:text-brand-dark-muted">({course.reviews.toLocaleString()} reviews)</span>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between border-t border-black/5 pt-4 dark:border-white/10">
         <div className="text-xs text-brand-muted dark:text-brand-dark-muted">
           <span className="font-semibold text-brand-text dark:text-white">{course.duration}</span> • {course.level}
         </div>
@@ -98,7 +112,23 @@ function GlassCourseCard({ course, index }: GlassCourseCardProps) {
 export default function HomeCoursesSection() {
   const ref = useRef<HTMLElement>(null)
   const inView = useInView(ref, { once: true, margin: '-100px' })
-  const displayedCourses = courses.filter((c) => c.status === 'Active').slice(0, 6)
+  const [courses, setCourses] = useState<Course[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await fetchPublishedSiteCourses()
+        setCourses(data)
+      } catch (err) {
+        console.error('Failed to load homepage courses:', err)
+      } finally {
+        setLoading(false)
+      }
+    })()
+  }, [])
+
+  const displayedCourses = courses.slice(0, 6)
 
   return (
     <section ref={ref} className="relative z-10 mx-auto max-w-7xl px-6 py-24 sm:px-8">
@@ -123,13 +153,21 @@ export default function HomeCoursesSection() {
         </p>
       </motion.div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {displayedCourses.map((course, i) => (
-          <Link key={course.id} to={`/courses`} className="block">
-            <GlassCourseCard course={course} index={i} />
-          </Link>
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 size={28} className="animate-spin text-brand-muted dark:text-brand-dark-muted" />
+        </div>
+      ) : displayedCourses.length === 0 ? (
+        <p className="text-center text-brand-muted dark:text-brand-dark-muted py-16">New courses are on the way — check back soon.</p>
+      ) : (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {displayedCourses.map((course, i) => (
+            <Link key={course.id} to={`/courses`} className="block">
+              <GlassCourseCard course={course} index={i} />
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* View all CTA */}
       <motion.div

@@ -41,26 +41,23 @@ export interface Course {
 }
 
 // ─── Resource Types ─────────────────────────────────────────────────────────
-export type ResourceType =
-  | 'Notes' | 'Roadmaps' | 'Previous Year Papers' | 'Quizzes'
-  | 'Practice Sheets' | 'E-Books' | 'Cheat Sheets' | 'Interview Questions'
-  | 'Coding Resources' | 'Career Resources' | 'Worksheets' | 'Formula Sheets'
-  | 'Mock Tests' | 'Project Ideas' | 'Revision Notes'
-
-export type ResourceCategory =
-  | 'Class 1-5' | 'Class 6-8' | 'Class 9-10' | 'Class 11-12'
-  | 'JEE' | 'NEET' | 'CUET' | 'Olympiads'
-  | 'DSA' | 'Web Development' | 'Flutter' | 'AI/ML' | 'Data Science' | 'Cyber Security' | 'Cloud Computing'
-  | 'JoSAA' | 'AKTU' | 'IPU' | 'JAC Delhi' | 'NEET Counseling' | 'LPU' | 'VIT' | 'BITS'
-
 export interface Resource {
   id: string
   title: string
   description: string
-  type: ResourceType
-  category: ResourceCategory
+  type: string           // from resource_types.name
+  college: string        // from colleges.name
+  course: string         // from courses.name
+  branch: string         // from branches.name
+  semester: string       // from semesters.semester_number (as string)
+  subject: string        // from subjects.name
+  collegeId?: number
+  courseId?: number
+  branchId?: number
+  semesterId?: number
+  subjectId?: number
   author: string
-  lastUpdated: string
+  lastUpdated: string    // from updated_at
   thumbnail?: string
   downloadUrl?: string
   isPremium: boolean
@@ -128,12 +125,14 @@ interface ContentState {
   roadmaps: Roadmap[]
 
   // Course actions
+  setCourses: (courses: Course[]) => void
   addCourse: (course: Omit<Course, 'id' | 'createdAt'>) => void
   updateCourse: (id: string, data: Partial<Course>) => void
   deleteCourse: (id: string) => void
   toggleCourseStatus: (id: string) => void
 
   // Resource actions
+  setResources: (resources: Resource[]) => void
   addResource: (resource: Omit<Resource, 'id' | 'createdAt' | 'downloads' | 'bookmarks'>) => void
   updateResource: (id: string, data: Partial<Resource>) => void
   deleteResource: (id: string) => void
@@ -153,83 +152,11 @@ interface ContentState {
 }
 
 // ─── Seed Data ───────────────────────────────────────────────────────────────
-const seedCourses: Course[] = [
-  {
-    id: 'c1', title: 'Complete DSA with Java', description: 'Master Data Structures & Algorithms from scratch to advanced level. Covers Arrays, Linked Lists, Trees, Graphs, DP and more.',
-    group: 'College & Tech Courses', subcategory: 'DSA', instructor: 'Skills021 Team',
-    duration: '80 hours', lectures: 240, level: 'Intermediate', rating: 4.9, reviews: 1200,
-    price: 999, tags: ['DSA', 'Java', 'Algorithms'], modules: [], status: 'Published',
-    enrolled: 4500, gradientFrom: '#6C63FF', gradientTo: '#00BFA6', createdAt: '2025-01-15',
-    videoUrl: 'https://www.youtube.com/@skills021',
-  },
-  {
-    id: 'c2', title: 'Full Stack Web Development', description: 'Build modern web apps with React, Node.js, MongoDB. Learn from basics to deployment.',
-    group: 'College & Tech Courses', subcategory: 'Web Development', instructor: 'Skills021 Team',
-    duration: '120 hours', lectures: 360, level: 'Beginner', rating: 4.8, reviews: 980,
-    price: 1499, tags: ['React', 'Node', 'MongoDB'], modules: [], status: 'Published',
-    enrolled: 3200, gradientFrom: '#FF6B6B', gradientTo: '#FFE66D', createdAt: '2025-02-01',
-    videoUrl: 'https://www.youtube.com/@skills021',
-  },
-  {
-    id: 'c3', title: 'JEE Mains & Advanced Complete', description: 'Comprehensive JEE preparation with Physics, Chemistry & Maths. Includes mock tests and PYQs.',
-    group: 'Competitive Exams', subcategory: 'JEE Preparation', instructor: 'Skills021 Team',
-    duration: '200 hours', lectures: 600, level: 'Advanced', rating: 4.9, reviews: 2100,
-    price: 2999, tags: ['JEE', 'Physics', 'Chemistry', 'Maths'], modules: [], status: 'Published',
-    enrolled: 8900, gradientFrom: '#4ECDC4', gradientTo: '#556270', createdAt: '2025-01-10',
-    videoUrl: 'https://www.youtube.com/@skills021',
-  },
-  {
-    id: 'c4', title: 'NEET Biology Masterclass', description: 'Complete Biology for NEET with NCERT analysis, PYQs and short notes.',
-    group: 'Competitive Exams', subcategory: 'NEET Preparation', instructor: 'Skills021 Team',
-    duration: '150 hours', lectures: 450, level: 'Intermediate', rating: 4.7, reviews: 1600,
-    price: 'FREE', tags: ['NEET', 'Biology', 'NCERT'], modules: [], status: 'Published',
-    enrolled: 12000, gradientFrom: '#A8E6CF', gradientTo: '#3D9970', createdAt: '2025-01-20',
-    videoUrl: 'https://www.youtube.com/@skills021',
-  },
-  {
-    id: 'c5', title: 'Flutter App Development', description: 'Build beautiful cross-platform apps with Flutter and Dart. From zero to Play Store.',
-    group: 'College & Tech Courses', subcategory: 'Flutter Development', instructor: 'Skills021 Team',
-    duration: '60 hours', lectures: 180, level: 'Beginner', rating: 4.8, reviews: 540,
-    price: 799, tags: ['Flutter', 'Dart', 'Mobile'], modules: [], status: 'Published',
-    enrolled: 2100, gradientFrom: '#667EEA', gradientTo: '#764BA2', createdAt: '2025-03-01',
-    videoUrl: 'https://www.youtube.com/@skills021',
-  },
-  {
-    id: 'c6', title: 'Class 10 Science & Maths', description: 'Complete CBSE Class 10 preparation with chapter-wise videos, notes and practice tests.',
-    group: 'Foundation Programs', subcategory: 'Class 9-10', instructor: 'Skills021 Team',
-    duration: '90 hours', lectures: 270, level: 'Beginner', rating: 4.6, reviews: 850,
-    price: 'FREE', tags: ['Class 10', 'CBSE', 'Science', 'Maths'], modules: [], status: 'Published',
-    enrolled: 15000, gradientFrom: '#F093FB', gradientTo: '#F5576C', createdAt: '2025-02-15',
-    videoUrl: 'https://www.youtube.com/@skills021',
-  },
-  {
-    id: 'c7', title: 'AI & Machine Learning with Python', description: 'Learn ML from scratch — regression, classification, neural networks, and deployment.',
-    group: 'College & Tech Courses', subcategory: 'AI & Machine Learning', instructor: 'Skills021 Team',
-    duration: '100 hours', lectures: 300, level: 'Intermediate', rating: 4.9, reviews: 720,
-    price: 1299, tags: ['AI', 'ML', 'Python', 'TensorFlow'], modules: [], status: 'Published',
-    enrolled: 3600, gradientFrom: '#4776E6', gradientTo: '#8E54E9', createdAt: '2025-03-10',
-    videoUrl: 'https://www.youtube.com/@skills021',
-  },
-  {
-    id: 'c8', title: 'Interview Preparation Bootcamp', description: 'Crack product-based company interviews with DSA, system design, and behavioral rounds.',
-    group: 'College & Tech Courses', subcategory: 'Interview Preparation', instructor: 'Skills021 Team',
-    duration: '40 hours', lectures: 120, level: 'Advanced', rating: 4.9, reviews: 1900,
-    price: 599, tags: ['Interview', 'DSA', 'System Design'], modules: [], status: 'Published',
-    enrolled: 7200, gradientFrom: '#f7971e', gradientTo: '#ffd200', createdAt: '2025-02-20',
-    videoUrl: 'https://www.youtube.com/@skills021',
-  },
-]
+// Courses now live in Supabase (public.site_courses) — see courseService.ts.
+// The store starts empty and is hydrated at runtime via setCourses().
+const seedCourses: Course[] = []
 
-const seedResources: Resource[] = [
-  { id: 'r1', title: 'DSA Cheat Sheet — Complete', description: 'One-page cheat sheet covering all major DSA patterns and time complexities.', type: 'Cheat Sheets', category: 'DSA', author: 'Skills021 Team', lastUpdated: '2026-05-01', isPremium: false, status: 'Published', downloads: 8900, bookmarks: 340, createdAt: '2025-12-01', downloadUrl: '#' },
-  { id: 'r2', title: 'JEE Mains PYQs 2024-2020', description: 'Solved previous year questions for JEE Mains 2020-2024 with detailed solutions.', type: 'Previous Year Papers', category: 'JEE', author: 'Skills021 Team', lastUpdated: '2026-04-15', isPremium: false, status: 'Published', downloads: 25000, bookmarks: 1200, createdAt: '2026-01-01', downloadUrl: '#' },
-  { id: 'r3', title: 'Software Engineer Roadmap 2025', description: 'Step-by-step roadmap to become a software engineer with resources for each stage.', type: 'Roadmaps', category: 'DSA', author: 'Skills021 Team', lastUpdated: '2026-03-20', isPremium: false, status: 'Published', downloads: 12000, bookmarks: 890, createdAt: '2025-11-15', downloadUrl: '#' },
-  { id: 'r4', title: 'NEET Biology Formula Book', description: 'Complete biology formula and reaction book for NEET preparation.', type: 'Formula Sheets', category: 'NEET', author: 'Skills021 Team', lastUpdated: '2026-02-10', isPremium: true, price: 99, status: 'Published', downloads: 4500, bookmarks: 230, createdAt: '2026-01-05', downloadUrl: '#' },
-  { id: 'r5', title: 'Web Dev Interview Questions (500+)', description: '500+ commonly asked web development interview questions with answers.', type: 'Interview Questions', category: 'Web Development', author: 'Skills021 Team', lastUpdated: '2026-05-10', isPremium: false, status: 'Published', downloads: 18000, bookmarks: 1100, createdAt: '2025-10-01', downloadUrl: '#' },
-  { id: 'r6', title: 'Class 10 Science Notes CBSE', description: 'Chapter-wise detailed notes for Class 10 Science — Physics, Chemistry, Biology.', type: 'Notes', category: 'Class 9-10', author: 'Skills021 Team', lastUpdated: '2026-01-20', isPremium: false, status: 'Published', downloads: 32000, bookmarks: 2100, createdAt: '2025-09-01', downloadUrl: '#' },
-  { id: 'r7', title: 'Python Cheat Sheet (Beginner to Advanced)', description: 'Comprehensive Python cheat sheet with syntax, examples and common libraries.', type: 'Cheat Sheets', category: 'Data Science', author: 'Skills021 Team', lastUpdated: '2026-04-01', isPremium: false, status: 'Published', downloads: 21000, bookmarks: 1500, createdAt: '2025-08-15', downloadUrl: '#' },
-  { id: 'r8', title: 'JoSAA Counseling Complete Guide 2025', description: 'Step-by-step JoSAA counseling guide with seat matrix, cutoffs and choice filling tips.', type: 'Roadmaps', category: 'JoSAA', author: 'Skills021 Team', lastUpdated: '2026-05-20', isPremium: true, price: 149, status: 'Published', downloads: 6700, bookmarks: 420, createdAt: '2026-02-01', downloadUrl: '#' },
-]
+const seedResources: Resource[] = []
 
 const seedQuizzes: Quiz[] = [
   {
@@ -304,6 +231,7 @@ export const useContentStore = create<ContentState>()(
       quizzes: seedQuizzes,
       roadmaps: seedRoadmaps,
 
+      setCourses: (courses) => set(() => ({ courses })),
       addCourse: (course) => set((s) => ({
         courses: [...s.courses, { ...course, id: `c-${Date.now()}`, createdAt: new Date().toISOString().split('T')[0] }]
       })),
@@ -315,6 +243,7 @@ export const useContentStore = create<ContentState>()(
         courses: s.courses.map((c) => c.id === id ? { ...c, status: c.status === 'Published' ? 'Draft' : 'Published' } : c)
       })),
 
+      setResources: (resources) => set(() => ({ resources })),
       addResource: (resource) => set((s) => ({
         resources: [...s.resources, { ...resource, id: `r-${Date.now()}`, downloads: 0, bookmarks: 0, createdAt: new Date().toISOString().split('T')[0] }]
       })),
